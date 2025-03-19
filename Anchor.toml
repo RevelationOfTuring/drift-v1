@@ -5,7 +5,8 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-drift_v1 = "H56ZcsSHhx3bPSeYoAkPeuhsz21yKfLf6asvvuUd4u3u"
+drift_v1 = "Do3SKatkSNF3FjKHpeMthHqTE5JfAJzTCrCC8xNBnkGP"
+mock_usdc_faucet = "BCuwrSaZemz7PVtDxruKT1S8HBHhBFixw6r4AsFimqr3"
 
 [registry]
 url = "https://api.apr.dev"

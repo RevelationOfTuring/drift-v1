@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("H56ZcsSHhx3bPSeYoAkPeuhsz21yKfLf6asvvuUd4u3u");
+declare_id!("Do3SKatkSNF3FjKHpeMthHqTE5JfAJzTCrCC8xNBnkGP");
 
 #[program]
 pub mod drift_v1 {
