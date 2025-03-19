@@ -55,9 +55,10 @@ pub mod mock_usdc_faucet {
 #[derive(Accounts)]
 pub struct MintToUser<'info> {
     #[account(mut)]
+    pub mock_usdc_mint: Box<Account<'info, Mint>>,
+    #[account(mut)]
     pub reciever: Box<Account<'info, TokenAccount>>,
     pub state: Box<Account<'info, State>>,
-    pub mock_usdc_mint: Box<Account<'info, Mint>>,
     /// CHECK: Checked by spl_token
     pub mint_authority_pda: UncheckedAccount<'info>,
     pub token_program: Program<'info, Token>,
@@ -74,8 +75,8 @@ pub struct InitializeMockUSDCFaucet<'info> {
         seeds = [b"state".as_ref()],
         bump
     )]
-    pub usdc_mint: Box<Account<'info, Mint>>,
     pub state: Box<Account<'info, State>>,
+    pub usdc_mint: Box<Account<'info, Mint>>,
     pub system_program: Program<'info, System>,
 }
 
