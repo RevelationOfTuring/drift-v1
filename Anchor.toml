@@ -5,6 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
+clearing_house = "HPx7dWgMDvEKRf5S8uLVG2VxEqdKRhQ5Q8meCqEsecZz"
 mock_usdc_faucet = "BCuwrSaZemz7PVtDxruKT1S8HBHhBFixw6r4AsFimqr3"
 
 [registry]
