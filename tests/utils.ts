@@ -10,12 +10,16 @@ function requirePublickeyEq(a: web3.PublicKey, b: web3.PublicKey) {
     expect(a.toBase58()).eq(b.toBase58());
 }
 
-async function requireCustomError(p: Promise<any>) {
+async function requireCustomError(p: Promise<any>, errorCode: string, logged = false) {
     try {
         await p;
     } catch (e) {
         let error = e as AnchorError;
-        console.log(error)
+        if (logged) {
+            console.log(error);
+        }
+
+        expect(error.error.errorCode.code).eq(errorCode);
     }
 }
 
@@ -68,4 +72,4 @@ async function createAccounts(
     return keys.slice(1).map(x => x.publicKey);
 }
 
-export { requireBNEq, requirePublickeyEq, createAccounts, requireNativeError };
+export { requireBNEq, requirePublickeyEq, createAccounts, requireNativeError, requireCustomError };
