@@ -1,11 +1,15 @@
 use anchor_lang::prelude::*;
 use bytemuck::{Pod, Zeroable};
+use static_assertions::const_assert_eq;
+use std::mem::size_of;
 
 #[account(zero_copy)]
 // markets账户里面存有最多64个Market的信息
 pub struct Markets {
     pub markets: [Market; 64],
 }
+
+const_assert_eq!(size_of::<Markets>(), 31744);
 
 #[zero_copy]
 pub struct Market {
@@ -75,8 +79,5 @@ pub struct AMM {
 // #[test]
 // fn test_a() {
 //     use std::mem;
-//     println!("alignment: {:?}", mem::align_of::<AMM>());
-//     println!("Amm size: {:?}", mem::size_of::<AMM>());
-//     println!("alignment: {:?}", mem::align_of::<u128>());
-//     println!("u128 size: {:?}", mem::size_of::<u128>());
+//     println!("Amm size: {:?}", mem::size_of::<Markets>());
 // }

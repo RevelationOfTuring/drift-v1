@@ -1,8 +1,6 @@
+use crate::state::{market::Markets, state::State};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use std::mem::size_of;
-
-use crate::state::{market::Markets, state::State};
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
@@ -10,14 +8,8 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     // 1. 创建pda，用于存储State
-    #[account(
-        init,
-        payer = admin,
-        space = 8 + size_of::<State>(),
-        seeds = [b"clearing_house".as_ref()],
-        bump
-    )]
-    pub state: Box<Account<'info, State>>,
+    #[account(zero)]
+    pub state: AccountLoader<'info, State>,
     // 2. 抵押品mint
     pub collateral_mint: Box<Account<'info, Mint>>,
     // 3. 创建抵押品vault（即owner为本program的一个ata，token种类为collateral_mint，authority为collateral_vault_authority）

@@ -1,7 +1,7 @@
 #![allow(unexpected_cfgs)]
 use anchor_lang::prelude::*;
 use context::*;
-use errors::ErrorCode;
+use errors::ErrorCode::*;
 use math::constant::*;
 use state::state::*;
 
@@ -26,7 +26,7 @@ pub mod clearing_house {
         require_keys_eq!(
             ctx.accounts.collateral_vault_authority.key(),
             collateral_vault_authority,
-            ErrorCode::InvalidCollateralVaultAuthority
+            InvalidCollateralVaultAuthority
         );
 
         // insurance_vault账户地址（pda，seeds为[b"insurance_vault"]）
@@ -38,21 +38,25 @@ pub mod clearing_house {
         require_keys_eq!(
             ctx.accounts.insurance_vault_authority.key(),
             insurance_vault_authority,
-            ErrorCode::InvalidInsuranceVaultAuthority
+            InvalidInsuranceVaultAuthority
         );
 
         ctx.accounts.markets.load_init()?;
 
+        let state = &mut ctx.accounts.state.load_init()?;
         let default_pubkey = Pubkey::default();
-        **ctx.accounts.state = State {
+        **state = State {
+            exchange_paused: 0,
+            funding_paused: 0,
+            admin_controls_prices: if admin_controls_prices { 1 } else { 0 },
+            collateral_vault_authority_nonce: collateral_vault_authority_bump,
+            insurance_vault_authority_nonce: insurance_vault_authority_bump,
+            padding0: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+
             admin: *ctx.accounts.admin.key,
-            exchange_paused: false,
-            funding_paused: false,
-            admin_controls_prices,
             collateral_mint: ctx.accounts.collateral_mint.key(),
             collateral_vault: *collateral_vault_key,
             collateral_vault_authority,
-            collateral_vault_authority_nonce: collateral_vault_authority_bump,
             // deposit_history/trade_history/funding_rate_history/funding_payment_history/liquidation_history/curve_history
             // 这六个history会被设置为Pubkey的默认值，进一步的设置会在initialize_history中做
             deposit_history: default_pubkey,
@@ -63,7 +67,6 @@ pub mod clearing_house {
             curve_history: default_pubkey,
             insurance_vault: *insurance_vault_key,
             insurance_vault_authority,
-            insurance_vault_authority_nonce: insurance_vault_authority_bump,
             markets: *ctx.accounts.markets.to_account_info().key,
             // 20%
             margin_ratio_initial: 2000,
@@ -86,24 +89,28 @@ pub mod clearing_house {
                         discount_numerator: DEFAULT_DISCOUNT_TOKEN_FIRST_TIER_DISCOUNT_NUMERATOR,
                         discount_denominator:
                             DEFAULT_DISCOUNT_TOKEN_FIRST_TIER_DISCOUNT_DENOMINATOR,
+                        padding: [0, 0, 0, 0, 0, 0, 0, 0],
                     },
                     second_tier: DiscountTokenTier {
                         minimun_balance: DEFAULT_DISCOUNT_TOKEN_SECOND_TIER_MINIMUM_BALANCE,
                         discount_numerator: DEFAULT_DISCOUNT_TOKEN_SECOND_TIER_DISCOUNT_NUMERATOR,
                         discount_denominator:
                             DEFAULT_DISCOUNT_TOKEN_SECOND_TIER_DISCOUNT_DENOMINATOR,
+                        padding: [0, 0, 0, 0, 0, 0, 0, 0],
                     },
                     third_tier: DiscountTokenTier {
                         minimun_balance: DEFAULT_DISCOUNT_TOKEN_THIRD_TIER_MINIMUM_BALANCE,
                         discount_numerator: DEFAULT_DISCOUNT_TOKEN_THIRD_TIER_DISCOUNT_NUMERATOR,
                         discount_denominator:
                             DEFAULT_DISCOUNT_TOKEN_THIRD_TIER_DISCOUNT_DENOMINATOR,
+                        padding: [0, 0, 0, 0, 0, 0, 0, 0],
                     },
                     fourth_tier: DiscountTokenTier {
                         minimun_balance: DEFAULT_DISCOUNT_TOKEN_FOURTH_TIER_MINIMUM_BALANCE,
                         discount_numerator: DEFAULT_DISCOUNT_TOKEN_FOURTH_TIER_DISCOUNT_NUMERATOR,
                         discount_denominator:
                             DEFAULT_DISCOUNT_TOKEN_FOURTH_TIER_DISCOUNT_DENOMINATOR,
+                        padding: [0, 0, 0, 0, 0, 0, 0, 0],
                     },
                 },
                 referral_discount: ReferralDiscount {
@@ -124,13 +131,15 @@ pub mod clearing_house {
                     slots_before_stable: 1000,
                     confidence_interval_max_size: 4,
                     too_volatile_ratio: 5,
+                    padding: [0, 0, 0, 0, 0, 0, 0, 0],
                 },
-                use_for_liquidations: true,
+                use_for_liquidations: 1,
+                padding: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             },
             max_deposit: 0,
             extended_curve_history: default_pubkey,
             order_state: default_pubkey,
-            padding: [0, 0, 0, 0],
+            padding1: [0, 0, 0, 0],
         };
 
         Ok(())

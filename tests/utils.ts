@@ -1,5 +1,6 @@
-import { AnchorError, BN, web3 } from "@coral-xyz/anchor";
+import { AnchorError, AnchorProvider, BN, Wallet, web3 } from "@coral-xyz/anchor";
 import { expect } from "chai";
+type PublicKey = web3.PublicKey;
 
 function requireBNEq(a: BN, b: BN) {
     expect(a.toString()).eq(b.toString());
@@ -15,8 +16,56 @@ async function requireCustomError(p: Promise<any>) {
     } catch (e) {
         let error = e as AnchorError;
         console.log(error)
-
     }
 }
 
-export { requireBNEq, requirePublickeyEq };
+async function requireNativeError(
+    p: Promise<any>,
+    expectedTransactionMessage: string,
+    expectedTransactionLogsIndexes: Array<number> = [],
+    expectedTransactionLogs: Array<string> = []
+) {
+    try {
+        await p;
+    } catch (e) {
+        expect(expectedTransactionLogsIndexes.length).eq(expectedTransactionLogs.length);
+        expect(e.transactionMessage).eq(expectedTransactionMessage);
+        for (let i = 0; i < expectedTransactionLogsIndexes.length; i++) {
+            expect(expectedTransactionLogs[i]).eq(e.transactionLogs[expectedTransactionLogsIndexes[i]]);
+        }
+    }
+}
+
+async function createAccounts(
+    provider: AnchorProvider,
+    spaces: Array<number>,
+    programId: PublicKey,
+): Promise<Array<PublicKey>> {
+    const tx = new web3.Transaction();
+    const wallet = provider.wallet as Wallet;
+    const keys = [wallet.payer];
+    for (const space of spaces) {
+        const key = web3.Keypair.generate();
+        keys.push(key);
+        const rent = await provider.connection.getMinimumBalanceForRentExemption(space);
+        tx.add(
+            web3.SystemProgram.createAccount({
+                fromPubkey: wallet.publicKey,
+                newAccountPubkey: key.publicKey,
+                lamports: rent,
+                space,
+                programId,
+            })
+        );
+    }
+
+    await web3.sendAndConfirmTransaction(
+        provider.connection,
+        tx,
+        keys
+    );
+
+    return keys.slice(1).map(x => x.publicKey);
+}
+
+export { requireBNEq, requirePublickeyEq, createAccounts, requireNativeError };
