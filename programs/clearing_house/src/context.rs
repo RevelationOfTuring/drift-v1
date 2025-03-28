@@ -1,4 +1,12 @@
-use crate::state::{market::Markets, state::State};
+use crate::state::{
+    history::{
+        curve_history::CurveHistory, deposit_history::DepositHistory,
+        funding_payment_history::FundingPaymentHistory, funding_rate_history::FundingRateHistory,
+        liquidation_history::LiquidationHistory, trade_history::TradeHistory,
+    },
+    market::Markets,
+    state::State,
+};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
@@ -43,4 +51,26 @@ pub struct Initialize<'info> {
     pub markets: AccountLoader<'info, Markets>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InitializeHistory<'info> {
+    pub admin: Signer<'info>,
+    #[account(
+        mut,
+        has_one = admin
+    )]
+    pub state: AccountLoader<'info, State>,
+    #[account(zero)]
+    pub funding_payment_history: AccountLoader<'info, FundingPaymentHistory>,
+    #[account(zero)]
+    pub trade_history: AccountLoader<'info, TradeHistory>,
+    #[account(zero)]
+    pub liquidation_history: AccountLoader<'info, LiquidationHistory>,
+    #[account(zero)]
+    pub deposit_history: AccountLoader<'info, DepositHistory>,
+    #[account(zero)]
+    pub funding_rate_history: AccountLoader<'info, FundingRateHistory>,
+    #[account(zero)]
+    pub curve_history: AccountLoader<'info, CurveHistory>,
 }

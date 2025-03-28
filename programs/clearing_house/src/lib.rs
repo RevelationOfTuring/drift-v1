@@ -1,14 +1,17 @@
 #![allow(unexpected_cfgs)]
 use anchor_lang::prelude::*;
 use context::*;
-use errors::ErrorCode::*;
+use errors::Errors;
 use math::constant::*;
 use state::state::*;
 
 pub mod context;
+pub mod controller;
 pub mod errors;
 pub mod math;
 pub mod state;
+
+use controller::position::PositionDirection;
 
 declare_id!("HPx7dWgMDvEKRf5S8uLVG2VxEqdKRhQ5Q8meCqEsecZz");
 
@@ -26,7 +29,7 @@ pub mod clearing_house {
         require_keys_eq!(
             ctx.accounts.collateral_vault_authority.key(),
             collateral_vault_authority,
-            InvalidCollateralVaultAuthority
+            Errors::InvalidCollateralVaultAuthority
         );
 
         // insurance_vault账户地址（pda，seeds为[b"insurance_vault"]）
@@ -38,7 +41,7 @@ pub mod clearing_house {
         require_keys_eq!(
             ctx.accounts.insurance_vault_authority.key(),
             insurance_vault_authority,
-            InvalidInsuranceVaultAuthority
+            Errors::InvalidInsuranceVaultAuthority
         );
 
         ctx.accounts.markets.load_init()?;
@@ -141,6 +144,38 @@ pub mod clearing_house {
             order_state: default_pubkey,
             padding1: [0, 0, 0, 0],
         };
+
+        Ok(())
+    }
+
+    pub fn intialize_history(ctx: Context<InitializeHistory>) -> Result<()> {
+        let state = &mut ctx.accounts.state.load_mut()?;
+        let default_pubkey = Pubkey::default();
+        // 如果state中这6个Pubkey都不是Pubkey默认值时，就会报错（表明history已经初始化过）
+        if !state.trade_history.eq(&default_pubkey)
+            && !state.deposit_history.eq(&default_pubkey)
+            && !state.liquidation_history.eq(&default_pubkey)
+            && !state.funding_rate_history.eq(&default_pubkey)
+            && !state.funding_payment_history.eq(&default_pubkey)
+            && !state.curve_history.eq(&default_pubkey)
+        {
+            return err!(Errors::HistoriesAllInitialized);
+        }
+
+        // 初始化这6个history账户的data
+        ctx.accounts.trade_history.load_init()?;
+        ctx.accounts.deposit_history.load_init()?;
+        ctx.accounts.liquidation_history.load_init()?;
+        ctx.accounts.funding_rate_history.load_init()?;
+        ctx.accounts.funding_payment_history.load_init()?;
+        ctx.accounts.curve_history.load_init()?;
+
+        state.trade_history = *ctx.accounts.trade_history.to_account_info().key;
+        state.deposit_history = *ctx.accounts.deposit_history.to_account_info().key;
+        state.liquidation_history = *ctx.accounts.liquidation_history.to_account_info().key;
+        state.funding_rate_history = *ctx.accounts.funding_rate_history.to_account_info().key;
+        state.funding_payment_history = *ctx.accounts.funding_payment_history.to_account_info().key;
+        state.curve_history = *ctx.accounts.curve_history.to_account_info().key;
 
         Ok(())
     }

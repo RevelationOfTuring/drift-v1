@@ -2,6 +2,8 @@ import { AnchorError, AnchorProvider, BN, Wallet, web3 } from "@coral-xyz/anchor
 import { expect } from "chai";
 type PublicKey = web3.PublicKey;
 
+const ZERO_BN = new BN(0);
+
 function requireBNEq(a: BN, b: BN) {
     expect(a.toString()).eq(b.toString());
 }
@@ -72,4 +74,10 @@ async function createAccounts(
     return keys.slice(1).map(x => x.publicKey);
 }
 
-export { requireBNEq, requirePublickeyEq, createAccounts, requireNativeError, requireCustomError };
+function getSeedFromNumber(n: number): Uint8Array {
+    const buf = Buffer.alloc(32);
+    buf.writeUInt8(n, 31);
+    return new Uint8Array(buf);
+}
+
+export { requireBNEq, requirePublickeyEq, createAccounts, requireNativeError, requireCustomError, getSeedFromNumber, ZERO_BN };
