@@ -8,4 +8,6 @@ pub enum Errors {
     InvalidInsuranceVaultAuthority,
     #[msg("Clearing house histories already initialized")]
     HistoriesAllInitialized,
+    #[msg("Clearing house order state already initialized")]
+    OrderStateAlreadyInitialized,
 }

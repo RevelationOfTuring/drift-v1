@@ -24,6 +24,9 @@ export class TestClient {
     depositHistory: PublicKey;
     fundingRateHistory: PublicKey;
     curveHistory: PublicKey;
+    orderHistory: PublicKey;
+
+    orderState: PublicKey;
 
 
     static async create(provider: AnchorProvider, clearingHouse: Program<ClearingHouse>, signersNum: number): Promise<TestClient> {
@@ -51,13 +54,20 @@ export class TestClient {
             this.program.programId
         );
 
+        [this.orderHistory] = await createAccounts(
+            this.provider,
+            [8 + 458784],
+            this.program.programId
+        );
+
         if (logAddrs) {
             console.log(`tradeHistory: ${this.tradeHistory}
 depositHistory: ${this.depositHistory}
 liquidationHistory: ${this.liquidationHistory}
 fundingPaymentHistory: ${this.fundingPaymentHistory}
 fundingRateHistory: ${this.fundingRateHistory}
-curveHistory: ${this.curveHistory}`);
+curveHistory: ${this.curveHistory}
+orderHistory: ${this.orderHistory}`);
         }
     }
 
@@ -67,6 +77,7 @@ curveHistory: ${this.curveHistory}`);
         [this.collateralVaultAuthority,] = web3.PublicKey.findProgramAddressSync([this.collateralVault.toBuffer()], this.program.programId);
         [this.insuranceVault,] = web3.PublicKey.findProgramAddressSync([Buffer.from('insurance_vault')], this.program.programId);
         [this.insuranceVaultAuthority,] = web3.PublicKey.findProgramAddressSync([this.insuranceVault.toBuffer()], this.program.programId);
+        [this.orderState,] = web3.PublicKey.findProgramAddressSync([Buffer.from('order_state')], this.program.programId);
 
         // create state && markets accounts
         [this.state, this.markets] = await createAccounts(
@@ -82,8 +93,21 @@ collateral vault: ${this.collateralVault}
 collateral vault authority: ${this.collateralVaultAuthority}
 insurance vault: ${this.insuranceVault}
 insurance vault authority: ${this.insuranceVaultAuthority}
-markets: ${this.markets}`);
+markets: ${this.markets}
+order state: ${this.orderState}`);
         }
+    }
+
+    async initializeOrderState() {
+        const signer = this.getCurrentSigner();
+        await this.program.methods.initializeOrderState()
+            .accounts({
+                admin: signer.publicKey,
+                state: this.state,
+                orderHistory: this.orderHistory
+            } as any)
+            .signers([signer])
+            .rpc();
     }
 
     async initializeHistory() {
@@ -148,6 +172,14 @@ markets: ${this.markets}`);
 
     async getCurveHistory(): Promise<IdlTypes<ClearingHouse>['curveHistory']> {
         return await this.program.account.curveHistory.fetch(this.curveHistory);
+    }
+
+    async getOrderHistory(): Promise<IdlTypes<ClearingHouse>['orderHistory']> {
+        return await this.program.account.orderHistory.fetch(this.orderHistory);
+    }
+
+    async getOrderState(): Promise<IdlTypes<ClearingHouse>['orderState']> {
+        return await this.program.account.orderState.fetch(this.orderState);
     }
 
     changeCurrentSigner(index: number) {

@@ -2,13 +2,16 @@ use crate::state::{
     history::{
         curve_history::CurveHistory, deposit_history::DepositHistory,
         funding_payment_history::FundingPaymentHistory, funding_rate_history::FundingRateHistory,
-        liquidation_history::LiquidationHistory, trade_history::TradeHistory,
+        liquidation_history::LiquidationHistory, order_history::OrderHistory,
+        trade_history::TradeHistory,
     },
     market::Markets,
+    order_state::OrderState,
     state::State,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
+use std::mem::size_of;
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
@@ -73,4 +76,26 @@ pub struct InitializeHistory<'info> {
     pub funding_rate_history: AccountLoader<'info, FundingRateHistory>,
     #[account(zero)]
     pub curve_history: AccountLoader<'info, CurveHistory>,
+}
+
+#[derive(Accounts)]
+pub struct InitializeOrderState<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    #[account(
+        mut,
+        has_one = admin
+    )]
+    pub state: AccountLoader<'info, State>,
+    #[account(
+        init,
+        payer = admin,
+        space = 8 + size_of::<OrderState>(),
+        seeds = [b"order_state".as_ref()],
+        bump,
+    )]
+    pub order_state: Box<Account<'info, OrderState>>,
+    #[account(zero)]
+    pub order_history: AccountLoader<'info, OrderHistory>,
+    pub system_program: Program<'info, System>,
 }
